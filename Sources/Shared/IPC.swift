@@ -1,7 +1,7 @@
 import Foundation
 
 /// Bumped whenever the helper changes, so the app knows to reinstall it.
-let zapretHelperVersion = "3"
+let zapretHelperVersion = "4"
 
 enum ZapretPaths {
     static let label = "local.zapret.helper"

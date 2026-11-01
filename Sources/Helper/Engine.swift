@@ -243,7 +243,8 @@ final class Engine {
     private func launchCiadpi(_ s: Strategy, port: Int, iface: String, quiet: Bool) -> Process? {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: ZapretPaths.bin + "/ciadpi")
-        p.arguments = ciadpiArguments(strategy: s, port: port, hostsFile: Lists.hostsFile)
+        p.arguments = ciadpiArguments(strategy: s, port: port, hostsFile: Lists.hostsFile,
+                                      noDomains: port == Engine.mainPort)
         // Our ByeDPI patch reads this and pins outgoing sockets to the real interface.
         p.environment = ["CIADPI_BOUND_IF": iface]
         p.standardOutput = FileHandle.nullDevice
@@ -414,8 +415,13 @@ final class Engine {
         }
     }
 
+    /// Probes use host names, so they run on a spare copy of ciadpi with the
+    /// same strategy. The main copy refuses names (see ciadpiArguments).
     private func checkHealth() {
-        let passed = Prober.probe(socksPort: Engine.mainPort)
+        guard let s = strategy, let ifc = iface,
+              let p = launchCiadpi(s, port: Engine.probeBasePort, iface: ifc, quiet: true) else { return }
+        let passed = Prober.probe(socksPort: Engine.probeBasePort)
+        stop(p)
         if passed.count == Prober.targets.count {
             healthFailures = 0
             return

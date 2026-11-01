@@ -34,8 +34,14 @@ private let udpGroups: [(ports: String, fake: String)] = [
 /// Full ciadpi command line for one strategy.
 /// Group order matters: UDP groups first (ciadpi picks the first match),
 /// then the TCP group limited to the host list; anything else passes untouched.
-func ciadpiArguments(strategy: Strategy, port: Int, hostsFile: String, dataDir: String = ZapretPaths.data) -> [String] {
+/// noDomains makes ciadpi refuse SOCKS requests with host names. Its name
+/// lookup blocks the whole proxy, and for the main instance that lookup goes
+/// through our DNS, whose DoH runs through the same proxy: a deadlock.
+/// tun2socks only sends IP addresses, so the main instance does not need names.
+func ciadpiArguments(strategy: Strategy, port: Int, hostsFile: String, dataDir: String = ZapretPaths.data,
+                     noDomains: Bool = false) -> [String] {
     var args = ["-i", "127.0.0.1", "-p", "\(port)", "-I", "0.0.0.0", "-c", "2048"]
+    if noDomains { args.append("-N") }
     for (i, g) in udpGroups.enumerated() {
         if i > 0 { args += ["-A", "n"] }
         args += ["-K", "u", "-V", g.ports, "-a", "6", "-t", "64", "-l", dataDir + "/" + g.fake]
