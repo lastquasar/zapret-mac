@@ -1,0 +1,68 @@
+diff --git a/extend.c b/extend.c
+index 1e8eee5..a23e261 100644
+--- a/extend.c
++++ b/extend.c
+@@ -182,8 +182,51 @@ static int on_socks_conn(struct poolhd *pool, struct eval *val, int t)
+ }
+ 
+ 
++#ifdef __APPLE__
++#include <net/if.h>
++#include <stdlib.h>
++
++// zapret-mac: pin outgoing sockets to the physical interface named in
++// CIADPI_BOUND_IF, so they do not loop back into the TUN device.
++static int bind_to_iface(int fd)
++{
++    static int init = 0;
++    static unsigned int idx = 0;
++    if (!init) {
++        init = 1;
++        const char *name = getenv("CIADPI_BOUND_IF");
++        if (name && *name) {
++            idx = if_nametoindex(name);
++        }
++    }
++    if (!idx) {
++        return 0;
++    }
++    union sockaddr_u addr;
++    socklen_t sz = sizeof(addr);
++    if (getsockname(fd, &addr.sa, &sz)) {
++        uniperror("getsockname");
++        return -1;
++    }
++    int r = addr.sa.sa_family == AF_INET6
++        ? setsockopt(fd, IPPROTO_IPV6, IPV6_BOUND_IF, &idx, sizeof(idx))
++        : setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx));
++    if (r) {
++        uniperror("setsockopt BOUND_IF");
++        return -1;
++    }
++    return 0;
++}
++#endif
++
++
+ int socket_mod(int fd)
+ {
++    #ifdef __APPLE__
++    if (bind_to_iface(fd) < 0) {
++        return -1;
++    }
++    #endif
+     if (params.custom_ttl) {
+         if (setttl(fd, params.def_ttl) < 0) {
+             return -1;
+@@ -289,8 +332,10 @@ static bool check_l34(struct desync_params *dp, int st, const union sockaddr_u *
+             return 0;
+         }
+     }
++    // zapret-mac: compare ports in host byte order so ranges work.
+     if (dp->pf[0] && 
+-            (dst->in.sin_port < dp->pf[0] || dst->in.sin_port > dp->pf[1])) {
++            (ntohs(dst->in.sin_port) < ntohs(dp->pf[0])
++            || ntohs(dst->in.sin_port) > ntohs(dp->pf[1]))) {
+         return 0;
+     }
+     if (dp->ipset && !check_ip(dp->ipset, dst)) {
