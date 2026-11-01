@@ -1,6 +1,6 @@
 import SwiftUI
 
-let appName = "zapret_alex_arbuz"
+let appName = "zapret-mac"
 
 /// What the user sees, reduced to three looks: off, busy, on.
 enum Look {

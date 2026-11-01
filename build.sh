@@ -7,7 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 VENDOR="$ROOT/vendor"
 OUT="$ROOT/build"
-NAME="zapret_alex_arbuz"
+NAME="zapret-mac"
 DMG="$OUT/zapret-mac.dmg"
 APP="$OUT/$NAME.app"
 TARGET="arm64-apple-macos14"

@@ -54,7 +54,7 @@ DNS:  macOS ──► 127.0.0.1:53 ──► DNS-over-HTTPS (1.1.1.1 / 8.8.8.8 /
 ./build.sh
 ```
 
-Результат: `build/zapret_alex_arbuz.app` и `build/zapret-mac.dmg`.
+Результат: `build/zapret-mac.app` и `build/zapret-mac.dmg`.
 Свою картинку для иконки можно передать так: `ICON=path/to/picture.png ./build.sh`.
 
 ## Файлы после установки
